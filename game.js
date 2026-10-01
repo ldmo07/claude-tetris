@@ -48,6 +48,7 @@ const themeToggle = document.getElementById('theme-toggle');
 let gridColor = '#22222e';
 let highlightColor = 'rgba(255,255,255,0.12)';
 
+let startLevel = 1;
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
 function createBoard() {
@@ -114,7 +115,7 @@ function clearLines() {
   if (cleared) {
     lines += cleared;
     score += (LINE_SCORES[cleared] || 0) * level;
-    level = Math.floor(lines / 10) + 1;
+    level = Math.max(startLevel, Math.floor(lines / 10) + 1);
     dropInterval = Math.max(100, 1000 - (level - 1) * 90);
     updateHUD();
   }
@@ -236,16 +237,7 @@ function endGame() {
 
 function togglePause() {
   if (gameOver) return;
-  paused = !paused;
-  if (!paused) {
-    lastTime = performance.now();
-    loop(lastTime);
-  } else {
-    cancelAnimationFrame(animId);
-    overlayTitle.textContent = 'PAUSA';
-    overlayScore.textContent = '';
-    overlay.classList.remove('hidden');
-  }
+  if (paused) resumeGame(); else openPauseMenu();
 }
 
 function loop(ts) {
@@ -271,23 +263,34 @@ function init() {
   board = createBoard();
   score = 0;
   lines = 0;
-  level = 1;
+  level = startLevel;
   paused = false;
   gameOver = false;
-  dropInterval = 1000;
+  dropInterval = Math.max(100, 1000 - (level - 1) * 90);
   dropAccum = 0;
   lastTime = performance.now();
   next = randomPiece();
   spawn();
   updateHUD();
   overlay.classList.add('hidden');
+  closePauseMenu();
   cancelAnimationFrame(animId);
   animId = requestAnimationFrame(loop);
 }
 
 document.addEventListener('keydown', e => {
-  if (e.code === 'KeyP') { togglePause(); return; }
-  if (paused || gameOver) return;
+  if (e.code === 'KeyP' || e.code === 'Escape') {
+    e.preventDefault();
+    if (!e.repeat) togglePause();
+    return;
+  }
+  if (paused) { handlePauseMenuKey(e); return; }
+  if (gameOver) return;
+  // Tras reanudar: ignorar teclas pulsadas durante el menú o dentro del cooldown
+  if (heldDuringPause.has(e.code) || performance.now() < inputBlockedUntil) {
+    if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+    return;
+  }
   switch (e.code) {
     case 'ArrowLeft':
       if (!collide(current.shape, current.x - 1, current.y)) current.x--;
@@ -310,6 +313,9 @@ document.addEventListener('keydown', e => {
   updateHUD();
 });
 
+document.addEventListener('keyup', e => heldDuringPause.delete(e.code));
+window.addEventListener('blur', () => heldDuringPause.clear());
+
 restartBtn.addEventListener('click', init);
 
 function applyTheme(theme) {
@@ -329,6 +335,88 @@ function applyTheme(theme) {
 themeToggle.addEventListener('click', () => {
   applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
   themeToggle.blur(); // evita que Space/Enter vuelvan a activar el botón
+});
+
+// ---- Menú de pausa ----
+const pauseMenu = document.getElementById('pause-menu');
+const pauseMain = document.getElementById('pause-main');
+const pauseControls = document.getElementById('pause-controls');
+const pauseResumeBtn = document.getElementById('pause-resume-btn');
+const pauseRestartBtn = document.getElementById('pause-restart-btn');
+const pauseControlsBtn = document.getElementById('pause-controls-btn');
+const pauseBackBtn = document.getElementById('pause-back-btn');
+const startLevelSelect = document.getElementById('start-level');
+
+const MAX_START_LEVEL = 10;
+const RESUME_COOLDOWN = 250; // ms sin aceptar inputs de juego tras reanudar
+let inputBlockedUntil = 0;
+const heldDuringPause = new Set(); // teclas pulsadas mientras el menú estaba abierto
+
+for (let l = 1; l <= MAX_START_LEVEL; l++) {
+  const opt = document.createElement('option');
+  opt.value = String(l);
+  opt.textContent = String(l);
+  startLevelSelect.appendChild(opt);
+}
+
+function showPauseView(controls) {
+  pauseMain.classList.toggle('hidden', controls);
+  pauseControls.classList.toggle('hidden', !controls);
+  pauseControlsBtn.setAttribute('aria-expanded', String(controls));
+  (controls ? pauseBackBtn : pauseResumeBtn).focus();
+}
+
+function openPauseMenu() {
+  paused = true;
+  cancelAnimationFrame(animId);
+  startLevelSelect.value = String(startLevel);
+  pauseMenu.classList.remove('hidden');
+  showPauseView(false);
+}
+
+function closePauseMenu() {
+  pauseMenu.classList.add('hidden');
+  pauseMain.classList.remove('hidden');
+  pauseControls.classList.add('hidden');
+  pauseControlsBtn.setAttribute('aria-expanded', 'false');
+  if (document.activeElement && pauseMenu.contains(document.activeElement)) document.activeElement.blur();
+}
+
+function resumeGame() {
+  if (!paused || gameOver) return;
+  paused = false;
+  closePauseMenu();
+  inputBlockedUntil = performance.now() + RESUME_COOLDOWN;
+  lastTime = performance.now();
+  cancelAnimationFrame(animId);
+  animId = requestAnimationFrame(loop);
+}
+
+function handlePauseMenuKey(e) {
+  heldDuringPause.add(e.code);
+  if (e.repeat && e.target !== startLevelSelect) { e.preventDefault(); return; }
+  if (e.target === startLevelSelect) return; // el select gestiona sus flechas
+  if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+    e.preventDefault();
+    const items = [...pauseMenu.querySelectorAll('button, select')].filter(el => el.offsetParent !== null);
+    const idx = items.indexOf(document.activeElement);
+    const step = e.code === 'ArrowDown' ? 1 : -1;
+    items[(idx + step + items.length) % items.length].focus();
+  } else if (e.code === 'Space') {
+    e.preventDefault(); // Space no debe hacer caída; el botón enfocado se activa con Enter
+  }
+}
+
+pauseResumeBtn.addEventListener('click', () => { resumeGame(); pauseResumeBtn.blur(); });
+pauseRestartBtn.addEventListener('click', () => {
+  init();
+  inputBlockedUntil = performance.now() + RESUME_COOLDOWN;
+  pauseRestartBtn.blur();
+});
+pauseControlsBtn.addEventListener('click', () => { showPauseView(true); });
+pauseBackBtn.addEventListener('click', () => { showPauseView(false); });
+startLevelSelect.addEventListener('change', () => {
+  startLevel = Math.min(MAX_START_LEVEL, Math.max(1, parseInt(startLevelSelect.value, 10) || 1));
 });
 
 init();
