@@ -83,6 +83,16 @@ jobs:
                Preguntas abiertas · Complejidad estimada (S/M/L).
                Debe servir de base para que un desarrollador implemente la solución después.
 
+               FORMATO: `triage/diagnosis.md` se publicará tal cual como comentario de GitHub, así que
+               debe estar en Markdown que GitHub (GFM) renderice correctamente:
+               - Encabezados `###`, listas con `-` o `1.`, **negritas** y tablas GFM cuando aporten.
+               - Código y nombres de funciones/archivos entre `backticks`; bloques de código con
+                 fences (```js) con lenguaje indicado y cerrados correctamente.
+               - Criterios de aceptación como lista de tareas (`- [ ] ...`).
+               - Referencias a código como `archivo:línea` entre backticks.
+               - Sin HTML crudo, sin front matter, sin el título principal `#` (ya lo añade el workflow)
+                 y sin envolver todo el documento en un bloque de código.
+
             No modifiques ningún otro archivo ni intentes interactuar con GitHub.
 
       - name: Aplicar labels
@@ -101,6 +111,7 @@ jobs:
           done < triage/labels.txt
           NEW="$(echo "$NEW" | xargs -n1 | sort -u | xargs)"
           echo "Labels a aplicar: $NEW"
+          [ -n "$NEW" ] || { echo "::error::labels.txt no contiene ningún label válido del set"; exit 1; }
 
           # Labels del set fijo que el issue tiene hoy.
           CURRENT="$(gh issue view "$ISSUE_NUMBER" --repo "$REPO" --json labels --jq '.labels[].name')"
@@ -115,9 +126,17 @@ jobs:
           REMOVE="${REMOVE#,}"
 
           ADD="$(echo "$NEW" | tr ' ' ',')"
-          [ -n "$ADD" ] && gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-label "$ADD"
-          [ -n "$REMOVE" ] && gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --remove-label "$REMOVE"
-          exit 0
+          gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-label "$ADD"
+          if [ -n "$REMOVE" ]; then
+            gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --remove-label "$REMOVE"
+          fi
+
+          # Verificar que los labels realmente quedaron en el issue.
+          APPLIED="$(gh issue view "$ISSUE_NUMBER" --repo "$REPO" --json labels --jq '.labels[].name')"
+          for n in $NEW; do
+            echo "$APPLIED" | grep -qx "$n" || { echo "::error::El label '$n' no se aplicó al issue"; exit 1; }
+          done
+          echo "Labels verificados en el issue: $NEW"
 
       - name: Publicar o actualizar diagnóstico
         run: |
