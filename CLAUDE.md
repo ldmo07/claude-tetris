@@ -16,7 +16,7 @@ Three files: `index.html` (DOM + two canvases), `style.css`, and `game.js` (all 
 
 `game.js` is built around module-level mutable state (`board`, `current`, `next`, `score`, `lines`, `level`, `paused`, `gameOver`, `dropInterval`, `animId`, …) declared once and reset in `init()`. Key points that span functions:
 
-- **Board model**: `ROWS × COLS` matrix; `0` is empty, `1–7` is an index into both `COLORS` and `PIECES` (same index = same piece type, so a piece's cells store its own color index).
+- **Board model**: `ROWS × COLS` matrix; `0` is empty, `1–8` is an index into both `COLORS` and `PIECES` (same index = same piece type, so a piece's cells store its own color index). Index 8 is the 3×3 "tuerca" (nut) with an empty center cell; `randomPiece` picks uniformly over `PIECES.length - 1` types.
 - **Piece lifecycle**: `spawn()` promotes `next` → `current` and draws the preview; it calls `endGame()` if the new piece collides. `lockPiece()` = `merge()` → `clearLines()` → `spawn()`. Both `hardDrop`, `softDrop` and the `loop` gravity tick end in `lockPiece()`.
 - **Game loop**: `requestAnimationFrame(loop)` accumulates `dropAccum` and drops one row when it reaches `dropInterval`. Pause/game-over stop the loop via `cancelAnimationFrame(animId)`; resuming or `init()` must reset `lastTime` to avoid a huge `dt`. `init()` is also the restart handler.
 - **Rotation**: `rotateCW` + `tryRotate` with horizontal-only kicks `[0, -1, 1, -2, 2]`.
