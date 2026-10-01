@@ -40,6 +40,12 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 
+const themeToggle = document.getElementById('theme-toggle');
+
+// Colores del canvas que dependen del tema (se actualizan en applyTheme)
+let gridColor = '#22222e';
+let highlightColor = 'rgba(255,255,255,0.12)';
+
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
 function createBoard() {
@@ -163,13 +169,13 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
   context.fillStyle = color;
   context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
   // highlight
-  context.fillStyle = 'rgba(255,255,255,0.12)';
+  context.fillStyle = highlightColor;
   context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
   context.globalAlpha = 1;
 }
 
 function drawGrid() {
-  ctx.strokeStyle = '#22222e';
+  ctx.strokeStyle = gridColor;
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -300,5 +306,24 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+function applyTheme(theme) {
+  const light = theme === 'light';
+  document.documentElement.dataset.theme = light ? 'light' : 'dark';
+  themeToggle.textContent = light ? 'Modo oscuro' : 'Modo claro';
+  themeToggle.setAttribute('aria-pressed', String(light));
+  gridColor = light ? '#e1e5ee' : '#22222e';
+  highlightColor = light ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.12)';
+  // En pausa/game over el loop está detenido: repintar manualmente
+  if (board) {
+    draw();
+    drawNext();
+  }
+}
+
+themeToggle.addEventListener('click', () => {
+  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+  themeToggle.blur(); // evita que Space/Enter vuelvan a activar el botón
+});
 
 init();
