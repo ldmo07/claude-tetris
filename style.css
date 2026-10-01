@@ -159,6 +159,26 @@ kbd {
   border-color: var(--accent);
 }
 
+/* ---- Selector de skin ---- */
+#skin-select {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#skin-select option {
+  background: var(--canvas-bg);
+  color: var(--text);
+}
+
+#skin-select:hover {
+  border-color: var(--accent);
+}
+
 /* ---- Overlay ---- */
 .overlay {
   position: absolute;
