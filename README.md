@@ -116,6 +116,7 @@ Contiene toda la lógica del juego. A grandes rasgos:
 - **Limpieza de líneas** (`clearLines`): recorre el tablero de abajo hacia arriba; cada fila completa se elimina y se inserta una vacía en la cima.
 - **Puntuación**: usa la tabla clásica `[0, 100, 300, 500, 800]` multiplicada por el nivel actual; el hard drop suma 2 puntos por celda recorrida y el soft drop 1 punto por fila.
 - **Nivel y velocidad**: el nivel sube cada 10 líneas; la velocidad de caída se calcula como `max(100, 1000 − (level − 1) × 90)` milisegundos.
+- **Récords** (`// ---- Récords ----`): pantalla de inicio (`#start-screen`) con el top 5 de puntuaciones, mejor combo y líneas máximas; el juego solo arranca al pulsar **Jugar**. Al terminar la partida, si la puntuación entra en el top 5 se pide un nombre (máx. 12 caracteres) y la fila nueva se resalta. Se guardan en `localStorage` (`tetris.records` y `tetris.stats`) y hay un botón **Resetear récords**. Si `localStorage` falla, el juego sigue funcionando sin persistencia.
 - **Ghost piece** (`ghostY`): proyecta la posición final de la pieza actual hacia abajo y la dibuja con `globalAlpha = 0.2`.
 
 ### Flujo del juego
