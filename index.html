@@ -53,7 +53,30 @@
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
+        <!-- ---- Récords (game over) ---- -->
+        <div id="rec-over" class="rec-block hidden">
+          <p id="rec-new-msg" class="rec-new-msg hidden">¡Nuevo récord! Entras en el top 5</p>
+          <form id="rec-form" class="rec-form hidden" autocomplete="off">
+            <input id="rec-name" type="text" maxlength="12" placeholder="Tu nombre" aria-label="Nombre del jugador" />
+            <button id="rec-save" type="submit">Guardar</button>
+          </form>
+          <h3 class="rec-heading">MEJORES PUNTUACIONES</h3>
+          <ol id="rec-over-list" class="rec-list"></ol>
+          <p id="rec-over-stats" class="rec-stats"></p>
+          <button id="rec-over-reset" class="rec-reset" type="button">Resetear récords</button>
+        </div>
         <button id="restart-btn">Reiniciar</button>
+      </div>
+    </div>
+
+    <!-- ---- Récords (pantalla de inicio) ---- -->
+    <div id="start-screen" class="overlay">
+      <div class="overlay-box">
+        <h3 class="rec-heading">MEJORES PUNTUACIONES</h3>
+        <ol id="rec-start-list" class="rec-list"></ol>
+        <p id="rec-start-stats" class="rec-stats"></p>
+        <button id="start-btn" type="button">Jugar</button>
+        <button id="rec-start-reset" class="rec-reset" type="button">Resetear récords</button>
       </div>
     </div>
   </div>
