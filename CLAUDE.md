@@ -23,4 +23,6 @@ Three files: `index.html` (DOM + two canvases), `style.css`, and `game.js` (all 
 - **Scoring/speed**: `LINE_SCORES × level`; level = `floor(lines/10)+1`; `dropInterval = max(100, 1000 - (level-1)*90)` (set in `clearLines`). Soft drop +1/row, hard drop +2/row.
 - **Rendering**: `draw()` repaints everything each frame (grid, board, ghost at `globalAlpha 0.2`, current piece). `drawBlock` is shared by the main and next-piece canvases.
 
+- **Theming**: colors live in CSS variables (`:root` = dark default, `:root[data-theme="light"]` = light). `applyTheme()` in `game.js` sets `data-theme`, updates the canvas-drawn colors (`gridColor`, `highlightColor`) and repaints with `draw()`/`drawNext()` since the loop is stopped when paused/game over. Not persisted between sessions.
+
 Changing `COLS`, `ROWS`, or `BLOCK` requires updating the `width`/`height` of `<canvas id="board">` in `index.html` (`COLS*BLOCK` × `ROWS*BLOCK`). The next-piece canvas is a fixed 120×120 (4×4 cells of 30px, hardcoded `NB` in `drawNext`).
