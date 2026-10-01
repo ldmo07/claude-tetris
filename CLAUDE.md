@@ -25,4 +25,6 @@ Three files: `index.html` (DOM + two canvases), `style.css`, and `game.js` (all 
 
 - **Theming**: colors live in CSS variables (`:root` = dark default, `:root[data-theme="light"]` = light). `applyTheme()` in `game.js` sets `data-theme`, updates the canvas-drawn colors (`gridColor`, `highlightColor`) and repaints with `draw()`/`drawNext()` since the loop is stopped when paused/game over. Not persisted between sessions.
 
+- **Pause menu**: `P`/`Escape` call `togglePause()` → `openPauseMenu()`/`resumeGame()` (section `// ---- Menú de pausa ----` in `game.js`; DOM `#pause-menu`, separate from the game-over `#overlay`). While `paused`, the keydown handler routes to `handlePauseMenuKey` and no game key acts; keys pressed during the menu are tracked in `heldDuringPause` (cleared on keyup) and `inputBlockedUntil` adds a 250 ms cooldown after resuming, which also resets `lastTime`. `startLevel` (1–10, chosen in the menu) persists across `init()`: `level = startLevel` and `clearLines` uses `level = max(startLevel, floor(lines/10)+1)`. The Reiniciar button calls `init()`; `init()` also closes the menu.
+
 Changing `COLS`, `ROWS`, or `BLOCK` requires updating the `width`/`height` of `<canvas id="board">` in `index.html` (`COLS*BLOCK` × `ROWS*BLOCK`). The next-piece canvas is a fixed 120×120 (4×4 cells of 30px, hardcoded `NB` in `drawNext`).
