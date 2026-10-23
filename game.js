@@ -326,9 +326,30 @@ function applyTheme(theme) {
   }
 }
 
+function loadTheme() {
+  try {
+    return localStorage.getItem('theme');
+  } catch (e) {
+    return null; // localStorage no disponible (modo privado, file://)
+  }
+}
+
+function saveTheme(theme) {
+  try {
+    localStorage.setItem('theme', theme);
+  } catch (e) {}
+}
+
 themeToggle.addEventListener('click', () => {
-  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+  const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+  applyTheme(next);
+  saveTheme(next);
   themeToggle.blur(); // evita que Space/Enter vuelvan a activar el botón
 });
+
+// Tema inicial: el guardado, o la preferencia del sistema si no hay elección previa
+const savedTheme = loadTheme();
+const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+applyTheme(savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : (prefersLight ? 'light' : 'dark'));
 
 init();
